@@ -1,0 +1,22 @@
+const { z } = require("zod");
+
+const loginSchema = z.object({
+  body: z.object({
+    email: z
+      .string()
+      .trim()
+      .email("Invalid email address")
+      .toLowerCase(),
+
+    password: z
+      .string()
+      .min(1, "Password is required"),
+  }),
+
+  params: z.object({}),
+  query: z.object({}),
+});
+
+module.exports = {
+  loginSchema,
+};
