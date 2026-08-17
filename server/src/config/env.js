@@ -1,13 +1,10 @@
 require("dotenv").config();
 
-
 const requiredEnv = (name) => {
   const value = process.env[name];
 
   if (!value) {
-    throw new Error(
-      `Missing required environment variable: ${name}`
-    );
+    throw new Error(`Missing required environment variable: ${name}`);
   }
 
   return value;
@@ -23,7 +20,7 @@ const env = {
     port: Number(process.env.DB_PORT) || 5432,
     name: process.env.DB_NAME || "devlens",
     user: process.env.DB_USER || "postgres",
-    password: requiredEnv("DB_PASSWORD"),
+    password: process.env.DB_PASSWORD || "",
   },
 
   jwt: {
@@ -32,9 +29,7 @@ const env = {
   },
 
   qdrant: {
-    url:
-      process.env.QDRANT_URL ||
-      "http://localhost:6333",
+    url: process.env.QDRANT_URL || "http://localhost:6333",
 
     apiKey: process.env.QDRANT_API_KEY || null,
   },
@@ -43,21 +38,15 @@ const env = {
     apiKey: requiredEnv("GEMINI_API_KEY"),
 
     generationModel:
-      process.env.GEMINI_GENERATION_MODEL ||
-      "gemini-3.5-flash-lite",
+      process.env.GEMINI_GENERATION_MODEL || "gemini-3.5-flash-lite",
   },
 
   conversation: {
-    historyLimit:
-      Number(
-        process.env.CONVERSATION_HISTORY_LIMIT || 10
-      ),
+    historyLimit: Number(process.env.CONVERSATION_HISTORY_LIMIT || 10),
   },
 
   client: {
-    url:
-      process.env.CLIENT_URL ||
-      "http://localhost:5173",
+    url: process.env.CLIENT_URL || "http://localhost:5173",
   },
 };
 
