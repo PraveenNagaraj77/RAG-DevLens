@@ -7,60 +7,60 @@ let server;
 
 const startServer = async () => {
   try {
+    // Check PostgreSQL
     await pool.query("SELECT NOW()");
     console.log("PostgreSQL connected successfully.");
 
-    const qdrantConnected = await testQdrantConnection();
+    // Check Qdrant
+    await testQdrantConnection();
 
-    if (!qdrantConnected) {
-      throw new Error("Qdrant connection failed");
-    }
-
+    // Start HTTP server
     server = app.listen(env.port, () => {
-      console.log(`DevLens server running on PORT ${env.port}`);
+      console.log(
+        `DevLens server running on PORT ${env.port}`
+      );
+      console.log(
+        `Environment: ${env.nodeEnv}`
+      );
     });
-
   } catch (error) {
-    console.error("Server startup failed:", error.message);
+    console.error(
+      "Server startup failed:",
+      error.message
+    );
+
     process.exit(1);
   }
 };
 
-const gracefulShutdown = async (signal) => {
-  console.log(`${signal} received. Shutting down gracefully...`);
+// Graceful shutdown
+const shutdown = async (signal) => {
+  console.log(`${signal} received. Shutting down...`);
 
-  if (!server) {
-    await pool.end();
+  if (server) {
+    server.close(async () => {
+      try {
+        await pool.end();
+
+        console.log("Database connection closed.");
+        console.log("Server shutdown complete.");
+
+        process.exit(0);
+      } catch (error) {
+        console.error(
+          "Error during shutdown:",
+          error.message
+        );
+
+        process.exit(1);
+      }
+    });
+  } else {
     process.exit(0);
   }
-
-  server.close(async () => {
-    console.log("HTTP server closed.");
-
-    try {
-      await pool.end();
-
-      console.log("PostgreSQL connection pool closed.");
-      console.log("DevLens shutdown complete.");
-
-      process.exit(0);
-    } catch (error) {
-      console.error(
-        "Error during graceful shutdown:",
-        error.message
-      );
-
-      process.exit(1);
-    }
-  });
 };
 
-process.on("SIGINT", () => {
-  gracefulShutdown("SIGINT");
-});
-
-process.on("SIGTERM", () => {
-  gracefulShutdown("SIGTERM");
-});
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
 
 startServer();
