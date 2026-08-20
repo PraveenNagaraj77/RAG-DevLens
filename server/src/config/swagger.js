@@ -4,8 +4,7 @@ const swaggerDocument = {
   info: {
     title: "DevLens API",
     version: "1.0.0",
-    description:
-      "AI-powered code and documentation assistant API",
+    description: "AI-powered code and documentation assistant API",
   },
 
   servers: [
@@ -34,7 +33,7 @@ const swaggerDocument = {
     },
     {
       name: "Documents",
-      description: "Document upload endpoints",
+      description: "Project document management endpoints",
     },
     {
       name: "Conversations",
@@ -119,6 +118,32 @@ const swaggerDocument = {
         },
       },
 
+      Document: {
+        type: "object",
+        properties: {
+          id: {
+            type: "string",
+            format: "uuid",
+          },
+          project_id: {
+            type: "string",
+            format: "uuid",
+          },
+          file_name: {
+            type: "string",
+            example: "DevLens Backend.pdf",
+          },
+          file_type: {
+            type: "string",
+            example: ".pdf",
+          },
+          created_at: {
+            type: "string",
+            format: "date-time",
+          },
+        },
+      },
+
       Conversation: {
         type: "object",
         properties: {
@@ -177,10 +202,15 @@ const swaggerDocument = {
   },
 
   paths: {
+    // =========================================================
+    // HEALTH
+    // =========================================================
+
     "/api/health": {
       get: {
         tags: ["Health"],
         summary: "Check API health",
+
         responses: {
           200: {
             description: "API is running",
@@ -193,6 +223,7 @@ const swaggerDocument = {
       get: {
         tags: ["Health"],
         summary: "Check API readiness",
+
         responses: {
           200: {
             description: "All required services are available",
@@ -204,6 +235,10 @@ const swaggerDocument = {
       },
     },
 
+    // =========================================================
+    // AUTHENTICATION
+    // =========================================================
+
     "/api/auth/login": {
       post: {
         tags: ["Authentication"],
@@ -211,17 +246,20 @@ const swaggerDocument = {
 
         requestBody: {
           required: true,
+
           content: {
             "application/json": {
               schema: {
                 type: "object",
                 required: ["email", "password"],
+
                 properties: {
                   email: {
                     type: "string",
                     format: "email",
                     example: "praveen@example.com",
                   },
+
                   password: {
                     type: "string",
                     format: "password",
@@ -247,6 +285,10 @@ const swaggerDocument = {
       },
     },
 
+    // =========================================================
+    // USERS
+    // =========================================================
+
     "/api/users": {
       post: {
         tags: ["Users"],
@@ -254,21 +296,25 @@ const swaggerDocument = {
 
         requestBody: {
           required: true,
+
           content: {
             "application/json": {
               schema: {
                 type: "object",
                 required: ["name", "email", "password"],
+
                 properties: {
                   name: {
                     type: "string",
                     example: "Praveen",
                   },
+
                   email: {
                     type: "string",
                     format: "email",
                     example: "praveen@example.com",
                   },
+
                   password: {
                     type: "string",
                     format: "password",
@@ -298,11 +344,13 @@ const swaggerDocument = {
       get: {
         tags: ["Users"],
         summary: "Get authenticated user profile",
+
         security: [
           {
             bearerAuth: [],
           },
         ],
+
         responses: {
           200: {
             description: "Authenticated user",
@@ -314,15 +362,21 @@ const swaggerDocument = {
       },
     },
 
+    // =========================================================
+    // PROJECTS
+    // =========================================================
+
     "/api/projects": {
       get: {
         tags: ["Projects"],
         summary: "Get all projects",
+
         security: [
           {
             bearerAuth: [],
           },
         ],
+
         responses: {
           200: {
             description: "Projects retrieved successfully",
@@ -333,6 +387,7 @@ const swaggerDocument = {
       post: {
         tags: ["Projects"],
         summary: "Create project",
+
         security: [
           {
             bearerAuth: [],
@@ -341,16 +396,19 @@ const swaggerDocument = {
 
         requestBody: {
           required: true,
+
           content: {
             "application/json": {
               schema: {
                 type: "object",
                 required: ["name"],
+
                 properties: {
                   name: {
                     type: "string",
                     example: "DevLens",
                   },
+
                   description: {
                     type: "string",
                     example: "AI code documentation assistant",
@@ -376,6 +434,7 @@ const swaggerDocument = {
       get: {
         tags: ["Projects"],
         summary: "Get project by ID",
+
         security: [
           {
             bearerAuth: [],
@@ -387,6 +446,7 @@ const swaggerDocument = {
             name: "id",
             in: "path",
             required: true,
+
             schema: {
               type: "string",
               format: "uuid",
@@ -407,6 +467,7 @@ const swaggerDocument = {
       put: {
         tags: ["Projects"],
         summary: "Update project",
+
         security: [
           {
             bearerAuth: [],
@@ -418,6 +479,7 @@ const swaggerDocument = {
             name: "id",
             in: "path",
             required: true,
+
             schema: {
               type: "string",
               format: "uuid",
@@ -427,15 +489,18 @@ const swaggerDocument = {
 
         requestBody: {
           required: true,
+
           content: {
             "application/json": {
               schema: {
                 type: "object",
                 required: ["name"],
+
                 properties: {
                   name: {
                     type: "string",
                   },
+
                   description: {
                     type: "string",
                   },
@@ -458,6 +523,7 @@ const swaggerDocument = {
       delete: {
         tags: ["Projects"],
         summary: "Delete project",
+
         security: [
           {
             bearerAuth: [],
@@ -469,6 +535,7 @@ const swaggerDocument = {
             name: "id",
             in: "path",
             required: true,
+
             schema: {
               type: "string",
               format: "uuid",
@@ -487,10 +554,15 @@ const swaggerDocument = {
       },
     },
 
-    "/api/documents/projects/{projectId}/upload": {
-      post: {
+    // =========================================================
+    // DOCUMENTS
+    // =========================================================
+
+    "/api/documents/projects/{projectId}": {
+      get: {
         tags: ["Documents"],
-        summary: "Upload project document",
+        summary: "Get all documents for a project",
+
         security: [
           {
             bearerAuth: [],
@@ -502,6 +574,75 @@ const swaggerDocument = {
             name: "projectId",
             in: "path",
             required: true,
+
+            schema: {
+              type: "string",
+              format: "uuid",
+            },
+          },
+        ],
+
+        responses: {
+          200: {
+            description: "Documents retrieved successfully",
+
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+
+                  properties: {
+                    success: {
+                      type: "boolean",
+                      example: true,
+                    },
+
+                    count: {
+                      type: "integer",
+                      example: 2,
+                    },
+
+                    data: {
+                      type: "array",
+
+                      items: {
+                        $ref: "#/components/schemas/Document",
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+
+          404: {
+            description: "Project not found",
+          },
+
+          401: {
+            description: "Unauthorized",
+          },
+        },
+      },
+    },
+
+    "/api/documents/projects/{projectId}/upload": {
+      post: {
+        tags: ["Documents"],
+        summary: "Upload project document",
+
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+
+        parameters: [
+          {
+            name: "projectId",
+            in: "path",
+            required: true,
+
             schema: {
               type: "string",
               format: "uuid",
@@ -511,11 +652,13 @@ const swaggerDocument = {
 
         requestBody: {
           required: true,
+
           content: {
             "multipart/form-data": {
               schema: {
                 type: "object",
                 required: ["file"],
+
                 properties: {
                   file: {
                     type: "string",
@@ -529,22 +672,99 @@ const swaggerDocument = {
 
         responses: {
           201: {
-            description: "Document uploaded successfully",
+            description:
+              "Document uploaded successfully",
           },
+
           400: {
             description: "Invalid upload",
           },
+
           404: {
             description: "Project not found",
+          },
+
+          401: {
+            description: "Unauthorized",
           },
         },
       },
     },
 
+    "/api/documents/{documentId}": {
+      delete: {
+        tags: ["Documents"],
+        summary: "Delete a document",
+
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+
+        parameters: [
+          {
+            name: "documentId",
+            in: "path",
+            required: true,
+
+            schema: {
+              type: "string",
+              format: "uuid",
+            },
+          },
+        ],
+
+        responses: {
+          200: {
+            description: "Document deleted successfully",
+
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+
+                  properties: {
+                    success: {
+                      type: "boolean",
+                      example: true,
+                    },
+
+                    message: {
+                      type: "string",
+                      example:
+                        "Document deleted successfully",
+                    },
+
+                    data: {
+                      $ref: "#/components/schemas/Document",
+                    },
+                  },
+                },
+              },
+            },
+          },
+
+          404: {
+            description: "Document not found",
+          },
+
+          401: {
+            description: "Unauthorized",
+          },
+        },
+      },
+    },
+
+    // =========================================================
+    // CONVERSATIONS
+    // =========================================================
+
     "/api/conversations": {
       post: {
         tags: ["Conversations"],
         summary: "Create conversation",
+
         security: [
           {
             bearerAuth: [],
@@ -553,19 +773,23 @@ const swaggerDocument = {
 
         requestBody: {
           required: true,
+
           content: {
             "application/json": {
               schema: {
                 type: "object",
                 required: ["projectId"],
+
                 properties: {
                   projectId: {
                     type: "string",
                     format: "uuid",
                   },
+
                   title: {
                     type: "string",
-                    example: "DevLens Documentation Chat",
+                    example:
+                      "DevLens Documentation Chat",
                   },
                 },
               },
@@ -575,8 +799,10 @@ const swaggerDocument = {
 
         responses: {
           201: {
-            description: "Conversation created successfully",
+            description:
+              "Conversation created successfully",
           },
+
           404: {
             description: "Project not found",
           },
@@ -584,10 +810,15 @@ const swaggerDocument = {
       },
     },
 
+    // =========================================================
+    // MESSAGES
+    // =========================================================
+
     "/api/messages/{conversationId}": {
       post: {
         tags: ["Messages"],
         summary: "Send message to DevLens",
+
         security: [
           {
             bearerAuth: [],
@@ -599,6 +830,7 @@ const swaggerDocument = {
             name: "conversationId",
             in: "path",
             required: true,
+
             schema: {
               type: "string",
               format: "uuid",
@@ -608,11 +840,13 @@ const swaggerDocument = {
 
         requestBody: {
           required: true,
+
           content: {
             "application/json": {
               schema: {
                 type: "object",
                 required: ["message"],
+
                 properties: {
                   message: {
                     type: "string",
@@ -626,8 +860,10 @@ const swaggerDocument = {
 
         responses: {
           200: {
-            description: "Message processed successfully",
+            description:
+              "Message processed successfully",
           },
+
           404: {
             description: "Conversation not found",
           },
