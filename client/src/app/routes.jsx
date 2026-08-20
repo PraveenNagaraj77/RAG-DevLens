@@ -5,7 +5,7 @@ import Projects from "@/pages/app/Projects";
 import Chat from "@/pages/app/Chat";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
-
+import Landing from "@/pages/Landing";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 import { createBrowserRouter, Navigate } from "react-router-dom";
@@ -14,7 +14,7 @@ const router = createBrowserRouter([
   // Root
   {
     path: "/",
-    element: <Navigate to="/login" replace />,
+    element: <Landing />,
   },
 
   // Authentication

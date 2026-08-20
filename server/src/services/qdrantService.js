@@ -122,7 +122,7 @@ const createPayloadIndexes = async () => {
   try {
     await qdrantClient.createPayloadIndex(COLLECTION_NAME, {
       field_name: "projectId",
-      field_schema: "keyword",
+      field_schema: "uuid",
       wait: true,
     });
 

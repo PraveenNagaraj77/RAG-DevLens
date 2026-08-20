@@ -1,7 +1,11 @@
 const app = require("./app");
 const env = require("./config/env");
 const pool = require("./config/db");
-const { testQdrantConnection } = require("./services/qdrantService");
+const {
+  testQdrantConnection,
+  createCollection,
+  createPayloadIndexes,
+} = require("./services/qdrantService");
 
 let server;
 
@@ -13,21 +17,16 @@ const startServer = async () => {
 
     // Check Qdrant
     await testQdrantConnection();
+    await createCollection();
+    await createPayloadIndexes();
 
     // Start HTTP server
     server = app.listen(env.port, () => {
-      console.log(
-        `DevLens server running on PORT ${env.port}`
-      );
-      console.log(
-        `Environment: ${env.nodeEnv}`
-      );
+      console.log(`DevLens server running on PORT ${env.port}`);
+      console.log(`Environment: ${env.nodeEnv}`);
     });
   } catch (error) {
-    console.error(
-      "Server startup failed:",
-      error
-    );
+    console.error("Server startup failed:", error);
 
     process.exit(1);
   }
@@ -47,10 +46,7 @@ const shutdown = async (signal) => {
 
         process.exit(0);
       } catch (error) {
-        console.error(
-          "Error during shutdown:",
-          error.message
-        );
+        console.error("Error during shutdown:", error.message);
 
         process.exit(1);
       }
