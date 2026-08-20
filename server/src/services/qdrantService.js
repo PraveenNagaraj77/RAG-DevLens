@@ -118,6 +118,25 @@ const searchSimilarChunks = async (
   }
 };
 
+const createPayloadIndexes = async () => {
+  try {
+    await qdrantClient.createPayloadIndex(COLLECTION_NAME, {
+      field_name: "projectId",
+      field_schema: "keyword",
+      wait: true,
+    });
+
+    console.log("Qdrant payload index created for projectId.");
+  } catch (error) {
+    console.error(
+      "Qdrant payload index creation failed:",
+      error.message
+    );
+
+    throw error;
+  }
+};
+
 module.exports = {
   COLLECTION_NAME,
   VECTOR_SIZE,
@@ -125,4 +144,5 @@ module.exports = {
   createCollection,
   upsertChunk,
   searchSimilarChunks,
+  createPayloadIndexes,
 };

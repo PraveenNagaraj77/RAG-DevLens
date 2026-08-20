@@ -1,37 +1,92 @@
 import { useEffect, useState } from "react";
-import { FileText, FolderKanban, MessageSquare, Plus } from "lucide-react";
+import {
+  FileText,
+  FolderKanban,
+  MessageSquare,
+  Plus,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { projectsApi } from "@/api/projects.api";
+import { documentsApi } from "@/api/documents.api";
 
 function Dashboard() {
   const { user } = useAuth();
 
   const [projects, setProjects] = useState([]);
-  const [projectCount, setProjectCount] = useState(0)
+  const [projectCount, setProjectCount] = useState(0);
+  const [documentCount, setDocumentCount] = useState(0);
+
   const [loading, setLoading] = useState(true);
+  const [documentsLoading, setDocumentsLoading] = useState(true);
 
   const userName = user?.name || "Developer";
 
   useEffect(() => {
-    const fetchProjects = async () => {
+    const fetchDashboardData = async () => {
       try {
+        setLoading(true);
+        setDocumentsLoading(true);
+
+        // Fetch projects
         const response = await projectsApi.getAll();
 
         console.log("Dashboard projects:", response);
 
-        setProjects(response?.data || []);
-        setProjectCount(response?.count || 0)
+        const projectList = Array.isArray(response?.data)
+          ? response.data
+          : [];
+
+        setProjects(projectList);
+        setProjectCount(
+          response?.count ?? projectList.length
+        );
+
+        // Fetch documents for every project
+        if (projectList.length === 0) {
+          setDocumentCount(0);
+          return;
+        }
+
+        const documentResponses = await Promise.all(
+          projectList.map((project) =>
+            documentsApi.getByProjectId(project.id)
+          )
+        );
+
+        const totalDocuments = documentResponses.reduce(
+          (total, response) => {
+            const documents = Array.isArray(response?.data)
+              ? response.data
+              : [];
+
+            return total + documents.length;
+          },
+          0
+        );
+
+        console.log(
+          "Dashboard document count:",
+          totalDocuments
+        );
+
+        setDocumentCount(totalDocuments);
       } catch (error) {
-        console.error("Failed to load dashboard projects:", error);
+        console.error(
+          "Failed to load dashboard data:",
+          error
+        );
+
+        setDocumentCount(0);
       } finally {
         setLoading(false);
+        setDocumentsLoading(false);
       }
     };
 
-    fetchProjects();
+    fetchDashboardData();
   }, []);
 
   const stats = [
@@ -42,7 +97,7 @@ function Dashboard() {
     },
     {
       label: "Documents",
-      value: 0,
+      value: documentsLoading ? "..." : documentCount,
       icon: FileText,
     },
     {
@@ -105,7 +160,9 @@ function Dashboard() {
       {/* Recent Projects */}
       <section className="mt-6 overflow-hidden rounded-xl border bg-card">
         <div className="border-b p-5 sm:p-6">
-          <h2 className="font-semibold">Recent Projects</h2>
+          <h2 className="font-semibold">
+            Recent Projects
+          </h2>
 
           <p className="mt-1 text-sm text-muted-foreground">
             Your recently created projects will appear here.
@@ -114,7 +171,9 @@ function Dashboard() {
 
         {loading ? (
           <div className="flex min-h-72 items-center justify-center p-6">
-            <p className="text-sm text-muted-foreground">Loading projects...</p>
+            <p className="text-sm text-muted-foreground">
+              Loading projects...
+            </p>
           </div>
         ) : projects.length === 0 ? (
           <div className="flex min-h-72 items-center justify-center p-6">
@@ -123,15 +182,20 @@ function Dashboard() {
                 <FolderKanban className="size-5 text-muted-foreground" />
               </div>
 
-              <h3 className="mt-4 text-sm font-medium">No projects yet</h3>
+              <h3 className="mt-4 text-sm font-medium">
+                No projects yet
+              </h3>
 
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Create your first project and start analyzing your codebase with
-                DevLens.
+                Create your first project and start analyzing
+                your codebase with DevLens.
               </p>
 
               <Link to="/app/projects">
-                <Button variant="outline" className="mt-5">
+                <Button
+                  variant="outline"
+                  className="mt-5"
+                >
                   <Plus className="size-4" />
                   Create Project
                 </Button>
@@ -164,8 +228,9 @@ function Dashboard() {
                     </div>
                   </div>
 
-                  <p className="mt-4 text-sm leading-5 text-muted-foreground line-clamp-2">
-                    {project.description || "No description provided."}
+                  <p className="mt-4 line-clamp-2 text-sm leading-5 text-muted-foreground">
+                    {project.description ||
+                      "No description provided."}
                   </p>
                 </div>
               </Link>

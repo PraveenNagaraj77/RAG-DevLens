@@ -1,7 +1,9 @@
+
 import {
   FolderKanban,
   LayoutDashboard,
   LogOut,
+  MessageSquare,
   Settings,
   UserRound,
   X,
@@ -20,6 +22,11 @@ const navigation = [
     label: "Projects",
     href: "/app/projects",
     icon: FolderKanban,
+  },
+  {
+    label: "AI Chat",
+    href: "/app/chat",
+    icon: MessageSquare,
   },
 ]
 
@@ -62,7 +69,6 @@ function NavigationItem({ item, onClick }) {
 
 function Sidebar({ open, onClose }) {
   const { user, logout } = useAuth()
-  console.log(user);
 
   const userName = user?.name || "Developer"
   const userEmail = user?.email || ""
@@ -165,3 +171,4 @@ function Sidebar({ open, onClose }) {
 }
 
 export default Sidebar
+

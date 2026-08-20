@@ -1,28 +1,20 @@
-import DashboardLayout from "@/layouts/DashboardLayout"
-import Dashboard from "@/pages/app/Dashboard"
-import ProjectDetails from "@/pages/app/ProjectDetails"
-import Projects from "@/pages/app/Projects"
+import DashboardLayout from "@/layouts/DashboardLayout";
+import Dashboard from "@/pages/app/Dashboard";
+import ProjectDetails from "@/pages/app/ProjectDetails";
+import Projects from "@/pages/app/Projects";
+import Chat from "@/pages/app/Chat";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
 
-import Login from "@/pages/Login"
-import Register from "@/pages/Register"
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
-import ProtectedRoute from "@/components/auth/ProtectedRoute"
-
-import {
-  createBrowserRouter,
-  Navigate,
-} from "react-router-dom"
+import { createBrowserRouter, Navigate } from "react-router-dom";
 
 const router = createBrowserRouter([
   // Root
   {
     path: "/",
-    element: (
-      <Navigate
-        to="/login"
-        replace
-      />
-    ),
+    element: <Navigate to="/login" replace />,
   },
 
   // Authentication
@@ -46,12 +38,7 @@ const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: (
-              <Navigate
-                to="/app/dashboard"
-                replace
-              />
-            ),
+            element: <Navigate to="/app/dashboard" replace />,
           },
 
           {
@@ -63,6 +50,10 @@ const router = createBrowserRouter([
             path: "projects",
             element: <Projects />,
           },
+          {
+            path: "chat",
+            element: <Chat />,
+          },
 
           {
             path: "projects/:projectId",
@@ -72,6 +63,6 @@ const router = createBrowserRouter([
       },
     ],
   },
-])
+]);
 
-export default router
+export default router;
