@@ -30,9 +30,26 @@ const app = express();
 app.use(helmet());
 
 // CORS
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://rag-dev-lens.vercel.app",
+];
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "https://rag-dev-lens-jy7ngl95p-praveens-projects-e56597f4.vercel.app",
+    origin: function (origin, callback) {
+      // Allow requests without an origin
+      // (Postman, curl, server-to-server requests)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
