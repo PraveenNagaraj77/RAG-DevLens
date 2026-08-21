@@ -6,7 +6,7 @@ const {
   generateAnswer,
 } = require("./llmService");
 
-const generateRAGAnswer = async (question,projectId,history=[], limit = 5) => {
+const generateRAGAnswer = async (question,projectId,history=[], limit = 10) => {
   try {
     console.log("Starting RAG pipeline...");
 

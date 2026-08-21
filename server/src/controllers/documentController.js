@@ -2,11 +2,18 @@ const path = require("path");
 
 const pool = require("../config/db");
 const {
+  ingestDocumentChunks,
+} = require("../services/ingestionService");
+const {
   saveDocumentChunks,
 } = require("../services/chunkService");
 const {
   extractText,
 } = require("../services/documentTextService");
+
+const {
+  deleteDocumentChunks,
+} = require("../services/qdrantService");
 
 const AppError = require("../utils/AppError");
 const asyncHandler = require("../utils/asyncHandler");
@@ -66,11 +73,17 @@ const uploadDocument = asyncHandler(async (req, res) => {
 
   const document = result.rows[0];
 
-  // Create chunks + embeddings + store in Qdrant
-  await saveDocumentChunks(
-    document.id,
-    document.content
-  );
+// Create and save chunks in PostgreSQL
+await saveDocumentChunks(
+  document.id,
+  document.content
+);
+
+// Generate embeddings and store chunks in Qdrant
+await ingestDocumentChunks(
+  document.id,
+  projectId
+);
 
   return res.status(201).json({
     success: true,
@@ -152,6 +165,9 @@ const deleteDocument = asyncHandler(async (req, res) => {
   }
 
   const document = documentResult.rows[0];
+
+  // Delete document chunks from Qdrant
+await deleteDocumentChunks(documentId);
 
   // Delete document chunks from PostgreSQL
   await pool.query(

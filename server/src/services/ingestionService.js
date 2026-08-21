@@ -18,17 +18,29 @@ const ingestDocumentChunks = async (documentId, projectId) => {
   }
 
   for (const chunk of chunks) {
-    const vector = await generateEmbedding(chunk.content);
+  console.log(
+    `Generating embedding for chunk ${chunk.chunk_index + 1}/${chunks.length}`
+  );
 
-    await upsertChunk({
-      id: chunk.id,
-      vector,
-      documentId: chunk.document_id,
-      projectId,
-      chunkIndex: chunk.chunk_index,
-      content: chunk.content,
-    });
-  }
+  const vector = await generateEmbedding(chunk.content);
+
+  console.log(
+    `Embedding generated for chunk ${chunk.chunk_index}: ${vector.length} dimensions`
+  );
+
+  await upsertChunk({
+    id: chunk.id,
+    vector,
+    documentId: chunk.document_id,
+    projectId,
+    chunkIndex: chunk.chunk_index,
+    content: chunk.content,
+  });
+
+  console.log(
+    `Chunk ${chunk.chunk_index} successfully inserted into Qdrant`
+  );
+}
 
   return {
     documentId,

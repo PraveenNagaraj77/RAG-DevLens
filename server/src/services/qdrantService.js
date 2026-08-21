@@ -86,6 +86,9 @@ const searchSimilarChunks = async (
   limit = 5
 ) => {
   try {
+    console.log("Qdrant search projectId:", projectId);
+    console.log("Qdrant query vector length:", vector.length);
+
     const result = await qdrantClient.query(
       COLLECTION_NAME,
       {
@@ -107,6 +110,25 @@ const searchSimilarChunks = async (
       }
     );
 
+    console.log(
+      "Qdrant search results:",
+      result.points.length
+    );
+    result.points.forEach((point, index) => {
+  console.log(`Result ${index + 1}:`, {
+    chunkIndex: point.payload.chunkIndex,
+    score: point.score,
+    preview: point.payload.content?.slice(0, 150),
+  });
+});
+
+    if (result.points.length > 0) {
+      console.log(
+        "First result payload:",
+        result.points[0].payload
+      );
+    }
+
     return result.points;
   } catch (error) {
     console.error(
@@ -127,9 +149,46 @@ const createPayloadIndexes = async () => {
     });
 
     console.log("Qdrant payload index created for projectId.");
+
+    await qdrantClient.createPayloadIndex(COLLECTION_NAME, {
+      field_name: "documentId",
+      field_schema: "uuid",
+      wait: true,
+    });
+
+    console.log("Qdrant payload index created for documentId.");
   } catch (error) {
     console.error(
       "Qdrant payload index creation failed:",
+      error.message
+    );
+
+    throw error;
+  }
+};
+
+const deleteDocumentChunks = async (documentId) => {
+  try {
+    await qdrantClient.delete(COLLECTION_NAME, {
+      wait: true,
+      filter: {
+        must: [
+          {
+            key: "documentId",
+            match: {
+              value: documentId,
+            },
+          },
+        ],
+      },
+    });
+
+    console.log(
+      `Qdrant chunks deleted for document ${documentId}`
+    );
+  } catch (error) {
+    console.error(
+      "Qdrant document chunks deletion failed:",
       error.message
     );
 
@@ -145,4 +204,5 @@ module.exports = {
   upsertChunk,
   searchSimilarChunks,
   createPayloadIndexes,
+  deleteDocumentChunks,
 };
