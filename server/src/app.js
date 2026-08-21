@@ -32,7 +32,7 @@ app.use(helmet());
 // CORS
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: process.env.CLIENT_URL || "https://rag-dev-lens-jy7ngl95p-praveens-projects-e56597f4.vercel.app",
     credentials: true,
   })
 );
