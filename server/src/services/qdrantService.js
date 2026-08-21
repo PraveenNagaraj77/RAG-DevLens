@@ -79,6 +79,29 @@ const upsertChunk = async ({
   }
 };
 
+const upsertChunks = async (points) => {
+  if (!points || points.length === 0) {
+    return;
+  }
+
+  try {
+    await qdrantClient.upsert(
+      COLLECTION_NAME,
+      {
+        wait: true,
+
+        points,
+      },
+    );
+  } catch (error) {
+    console.error(
+      "Qdrant batch upsert failed:",
+      error.message,
+    );
+
+    throw error;
+  }
+};
 
 const searchSimilarChunks = async (
   vector,
@@ -202,6 +225,7 @@ module.exports = {
   testQdrantConnection,
   createCollection,
   upsertChunk,
+  upsertChunks,
   searchSimilarChunks,
   createPayloadIndexes,
   deleteDocumentChunks,

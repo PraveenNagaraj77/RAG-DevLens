@@ -30,44 +30,18 @@ function AuthProvider({ children }) {
   const [user, setUser] = useState(getStoredUser)
 
   const login = async (credentials) => {
-    /*
-     * credentials:
-     * {
-     *   email,
-     *   password
-     * }
-     */
-
     const response = await authApi.login(credentials)
-
-    /*
-     * Backend response:
-     *
-     * {
-     *   success: true,
-     *   message: "Login successful",
-     *   data: {
-     *     user: {...},
-     *     token: "..."
-     *   }
-     * }
-     */
 
     const loggedInUser = response.data.user
     const token = response.data.token
 
-    // Store authentication information
-    localStorage.setItem(
-      "token",
-      token
-    )
+    localStorage.setItem("token", token)
 
     localStorage.setItem(
       "user",
       JSON.stringify(loggedInUser)
     )
 
-    // Update React state
     setUser(loggedInUser)
 
     return response
@@ -78,6 +52,8 @@ function AuthProvider({ children }) {
     localStorage.removeItem("user")
 
     setUser(null)
+
+    window.location.href = "/"
   }
 
   const token = localStorage.getItem("token")

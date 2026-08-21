@@ -2,58 +2,48 @@ const multer = require("multer");
 
 const storage = multer.memoryStorage();
 
-const allowedFileTypes = {
-  ".txt": ["text/plain"],
-  ".md": ["text/markdown", "text/plain"],
-  ".js": ["text/javascript", "application/javascript", "text/plain"],
-  ".jsx": ["text/javascript", "application/javascript", "text/plain"],
-  ".ts": ["text/typescript", "application/typescript", "text/plain"],
-  ".tsx": ["text/typescript", "application/typescript", "text/plain"],
-  ".json": ["application/json", "text/plain"],
-  ".html": ["text/html"],
-  ".css": ["text/css"],
-  ".pdf": ["application/pdf"],
-};
-
-const fileFilter = (req, file, cb) => {
-  const originalName = file.originalname.toLowerCase();
-
-  const lastDotIndex = originalName.lastIndexOf(".");
-
-  if (lastDotIndex === -1) {
-    return cb(
-      new Error("File must have a valid extension")
-    );
-  }
-
-  const extension = originalName.substring(lastDotIndex);
-
-  const allowedMimeTypes = allowedFileTypes[extension];
-
-  if (!allowedMimeTypes) {
-    return cb(
-      new Error("Unsupported file type")
-    );
-  }
-
-  if (!allowedMimeTypes.includes(file.mimetype)) {
-    return cb(
-      new Error("Invalid file MIME type")
-    );
-  }
-
-  cb(null, true);
-};
+const ALLOWED_EXTENSIONS = new Set([
+  ".txt",
+  ".md",
+  ".js",
+  ".jsx",
+  ".ts",
+  ".tsx",
+  ".json",
+  ".html",
+  ".css",
+  ".pdf",
+  ".java",
+  ".sql",
+  ".zip",
+]);
 
 const upload = multer({
   storage,
 
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5 MB
-    files: 1,
+    fileSize: 5 * 1024 * 1024,
+    files: 50,
   },
 
-  fileFilter,
-});
+  fileFilter: (req, file, cb) => {
+    const originalName = file.originalname || "";
 
+    const extension = originalName
+      .substring(originalName.lastIndexOf("."))
+      .toLowerCase();
+
+    if (!extension || extension === originalName.toLowerCase()) {
+      return cb(new Error("File must have a valid extension"));
+    }
+
+    if (!ALLOWED_EXTENSIONS.has(extension)) {
+      return cb(
+        new Error(`Unsupported file type: ${extension}`)
+      );
+    }
+
+    cb(null, true);
+  },
+});
 module.exports = upload;

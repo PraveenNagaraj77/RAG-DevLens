@@ -3,48 +3,165 @@ const {
 } = require("../repositories/chunkRepository");
 
 const {
-  upsertChunk,
+  upsertChunks,
 } = require("./qdrantService");
 
 const {
-  generateEmbedding,
+  generateEmbeddings,
+  EMBEDDING_DIMENSION,
 } = require("./embeddingService");
 
-const ingestDocumentChunks = async (documentId, projectId) => {
-  const chunks = await getChunksByDocumentId(documentId);
+const EMBEDDING_BATCH_SIZE = 20;
+
+// ==================================================
+// INGEST DOCUMENT CHUNKS
+// ==================================================
+
+const ingestDocumentChunks = async (
+  documentId,
+  projectId,
+) => {
+  const chunks =
+    await getChunksByDocumentId(documentId);
 
   if (chunks.length === 0) {
-    throw new Error("No chunks found for this document.");
+    throw new Error(
+      "No chunks found for this document.",
+    );
   }
 
-  for (const chunk of chunks) {
-  console.log(
-    `Generating embedding for chunk ${chunk.chunk_index + 1}/${chunks.length}`
-  );
+  let processed = 0;
 
-  const vector = await generateEmbedding(chunk.content);
+  const total = chunks.length;
 
-  console.log(
-    `Embedding generated for chunk ${chunk.chunk_index}: ${vector.length} dimensions`
-  );
+  for (
+    let start = 0;
+    start < chunks.length;
+    start += EMBEDDING_BATCH_SIZE
+  ) {
+    const batch = chunks.slice(
+      start,
+      start + EMBEDDING_BATCH_SIZE,
+    );
 
-  await upsertChunk({
-    id: chunk.id,
-    vector,
-    documentId: chunk.document_id,
-    projectId,
-    chunkIndex: chunk.chunk_index,
-    content: chunk.content,
-  });
+    const batchNumber =
+      Math.floor(
+        start / EMBEDDING_BATCH_SIZE,
+      ) + 1;
 
-  console.log(
-    `Chunk ${chunk.chunk_index} successfully inserted into Qdrant`
-  );
-}
+    console.log(
+      `Embedding batch ${batchNumber} | ${processed}/${total}`,
+    );
+
+    // ------------------------------------------------
+    // Generate embeddings
+    // ------------------------------------------------
+
+    const embeddings =
+      await generateEmbeddings(
+        batch.map(
+          (chunk) => chunk.content,
+        ),
+      );
+
+    // ------------------------------------------------
+    // Validate embeddings
+    // ------------------------------------------------
+
+    if (
+      !Array.isArray(embeddings) ||
+      embeddings.length !== batch.length
+    ) {
+      throw new Error(
+        `Invalid embedding response. Expected ${batch.length} embeddings, got ${
+          embeddings?.length || 0
+        }.`,
+      );
+    }
+
+    for (
+      let i = 0;
+      i < embeddings.length;
+      i++
+    ) {
+      if (
+        !Array.isArray(embeddings[i])
+      ) {
+        throw new Error(
+          `Invalid embedding at index ${i}.`,
+        );
+      }
+
+      if (
+        embeddings[i].length !==
+        EMBEDDING_DIMENSION
+      ) {
+        throw new Error(
+          `Invalid embedding dimension at index ${i}. Expected ${EMBEDDING_DIMENSION}, got ${embeddings[i].length}.`,
+        );
+      }
+    }
+
+    // ------------------------------------------------
+    // Prepare Qdrant points
+    // ------------------------------------------------
+
+    const points = batch.map(
+      (chunk, index) => ({
+        id: chunk.id,
+
+        vector: embeddings[index],
+
+        payload: {
+          documentId:
+            chunk.document_id,
+
+          projectId,
+
+          chunkIndex:
+            chunk.chunk_index,
+
+          content:
+            chunk.content,
+        },
+      }),
+    );
+
+    // ------------------------------------------------
+    // DEBUG
+    // ------------------------------------------------
+
+    console.log(
+      "Qdrant first point:",
+      {
+        id: points[0]?.id,
+        hasVector:
+          Array.isArray(
+            points[0]?.vector,
+          ),
+        vectorLength:
+          points[0]?.vector?.length,
+        payload:
+          points[0]?.payload,
+      },
+    );
+
+    // ------------------------------------------------
+    // Insert into Qdrant
+    // ------------------------------------------------
+
+    await upsertChunks(points);
+
+    processed += batch.length;
+
+    console.log(
+      `Embedding batch ${batchNumber} completed | ${processed}/${total}`,
+    );
+  }
 
   return {
     documentId,
-    chunksProcessed: chunks.length,
+    chunksProcessed: processed,
   };
 };
 

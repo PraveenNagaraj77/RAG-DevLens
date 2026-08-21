@@ -26,35 +26,45 @@ function Dashboard() {
   const userName = user?.name || "Developer";
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
         setDocumentsLoading(true);
 
+        // Fetch projects first
         const response = await projectsApi.getAll();
 
-        console.log("Dashboard projects:", response);
+        if (cancelled) return;
 
         const projectList = Array.isArray(response?.data)
           ? response.data
           : [];
 
         setProjects(projectList);
+        setProjectCount(response?.count ?? projectList.length);
 
-        setProjectCount(
-          response?.count ?? projectList.length
-        );
-
+        // No projects = no documents
         if (projectList.length === 0) {
           setDocumentCount(0);
+          setDocumentsLoading(false);
           return;
         }
 
+        /*
+         * Fetch document counts in parallel.
+         *
+         * Promise.all means all requests are started
+         * immediately instead of waiting for each one.
+         */
         const documentResponses = await Promise.all(
-          projectList.map((project) =>
-            documentsApi.getByProjectId(project.id)
+          projectList.map(({ id }) =>
+            documentsApi.getByProjectId(id)
           )
         );
+
+        if (cancelled) return;
 
         const totalDocuments = documentResponses.reduce(
           (total, response) => {
@@ -67,26 +77,31 @@ function Dashboard() {
           0
         );
 
-        console.log(
-          "Dashboard document count:",
-          totalDocuments
-        );
-
         setDocumentCount(totalDocuments);
       } catch (error) {
+        if (cancelled) return;
+
         console.error(
           "Failed to load dashboard data:",
           error
         );
 
+        setProjects([]);
+        setProjectCount(0);
         setDocumentCount(0);
       } finally {
-        setLoading(false);
-        setDocumentsLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+          setDocumentsLoading(false);
+        }
       }
     };
 
     fetchDashboardData();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const stats = [
